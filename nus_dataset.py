@@ -15,6 +15,7 @@ dblabel = []
 testid = []
 testdata = []
 testlabel = []
+groundtruth = []
 
 for i in range(10):
 	trainlabel.append([])
@@ -37,6 +38,14 @@ fin = open('databaseid.txt', 'r')
 raw_data = fin.readlines()
 for temp in raw_data:
 	dbid.append(temp.strip())
+fin.close()
+
+fin = open('groundtruth.txt', 'r')
+raw_data = fin.readlines()
+for temp in raw_data:
+	answer = temp.strip().split(' ')
+	answer = [int(item) for item in answer]
+	groundtruth.append(answer)
 fin.close()
 
 fin1 = open('traindata_image.txt', 'r')

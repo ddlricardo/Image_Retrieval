@@ -17,10 +17,16 @@ testlabel = nus_dataset.testlabel
 dbdata = nus_dataset.dbdata
 #dbdata = preprocessing.scale(dbdata)
 dblabel = nus_dataset.dblabel
-
+groundtruth = nus_dataset.groundtruth
 
 sem = td.Semaphore(config.num_thread)
 svms = []
+
+result = []
+prediction = []
+temp = [0 for i in range(100000)]
+for i in range(20):
+	prediction.append(temp)
 
 def runner(i):
 	sem.acquire()
@@ -28,9 +34,9 @@ def runner(i):
 	clf = svm.LinearSVC()
 	clf = clf.fit(traindata, trainlabel[i])
 	svms.append((i, clf))
-	result = clf.predict(testdata)
+	result.append(clf.predict(testdata))
 	print("label %s done\n%s"
-	 % (i, metrics.classification_report(testlabel[i], result)))
+	 % (i, metrics.classification_report(testlabel[i], result[i])))
 	print metrics.confusion_matrix(testlabel[i], result)
 	sem.release()
 
@@ -46,3 +52,18 @@ for t in ts: t.join()
 s = pickle.dumps(svms)
 
 open("svm_dump.bin", 'w').write(s)
+
+for i in range(10):
+	for j in range(2000):
+		for k in range(100000):
+			if result[i][j] == dblabel[i][k]:
+				prediction[j][k] = 1
+
+count = 0
+right = 0
+for i in range(2000):
+	for j in range(100000):
+		count += 1
+		if prediction[i][j] == groundtruth[i][j]:
+			right += 1
+print float(right * 1.0 / count)
