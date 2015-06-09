@@ -26,7 +26,7 @@ result = []
 for i in range(10):
 	result.append([])
 prediction = []
-temp = [0 for i in range(100000)]
+temp = [0] * 100000
 for i in range(2000):
 	prediction.append(temp)
 
@@ -39,7 +39,7 @@ def runner(i):
 	result[i] = clf.predict(testdata)
 	print("label %s done\n%s"
 	 % (i, metrics.classification_report(testlabel[i], result[i])))
-	print metrics.confusion_matrix(testlabel[i], result)
+	#print metrics.confusion_matrix(testlabel[i], result)
 	sem.release()
 
 
@@ -58,7 +58,7 @@ open("svm_dump.bin", 'w').write(s)
 for i in range(10):
 	for j in range(2000):
 		for k in range(100000):
-			if result[i][j] == dblabel[i][k]:
+			if result[i][j] == dblabel[i][k] and result[i][j] == 1:
 				prediction[j][k] = 1
 
 count = 0
