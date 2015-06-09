@@ -2,6 +2,7 @@ import json
 import os
 
 cf = json.load(open('config.json'))
+num_thread = int(cf["num_thread"])
 
 def goto_nus_dataset():
     os.chdir(cf['data_path'])

@@ -3,8 +3,10 @@ from sklearn import svm
 from sklearn import metrics
 from sklearn import preprocessing
 import threading as td
+import pickle
 
 import nus_dataset
+import config
 
 traindata = nus_dataset.traindata
 #traindata = preprocessing.scale(traindata)
@@ -17,7 +19,7 @@ dbdata = nus_dataset.dbdata
 dblabel = nus_dataset.dblabel
 
 
-sem = td.Semaphore(2)
+sem = td.Semaphore(config.num_thread)
 svms = []
 
 def runner(i):
@@ -39,3 +41,8 @@ for i in range(10):
 	t = td.Thread(target=runner, args=(i,))
 	t.start()
 	ts.append(t)
+
+for t in ts: t.join()
+s = pickle.dumps(svms)
+
+open("svm_dump.bin", 'w').write(s)

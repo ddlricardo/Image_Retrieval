@@ -1,3 +1,4 @@
 {
-    "data_path": "E:/data/DIP2015_EXP2/DIP2015_EXP2"
+    "data_path": "E:/data/DIP2015_EXP2/DIP2015_EXP2",
+    "num_thread": "10"
 }
