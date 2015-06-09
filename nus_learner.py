@@ -23,9 +23,11 @@ sem = td.Semaphore(config.num_thread)
 svms = []
 
 result = []
+for i in range(10):
+	result.append([])
 prediction = []
 temp = [0 for i in range(100000)]
-for i in range(20):
+for i in range(2000):
 	prediction.append(temp)
 
 def runner(i):
@@ -34,7 +36,7 @@ def runner(i):
 	clf = svm.LinearSVC()
 	clf = clf.fit(traindata, trainlabel[i])
 	svms.append((i, clf))
-	result.append(clf.predict(testdata))
+	result[i] = clf.predict(testdata)
 	print("label %s done\n%s"
 	 % (i, metrics.classification_report(testlabel[i], result[i])))
 	print metrics.confusion_matrix(testlabel[i], result)
