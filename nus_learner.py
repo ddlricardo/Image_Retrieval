@@ -16,12 +16,21 @@ dbdata = nus_dataset.dbdata
 #dbdata = preprocessing.scale(dbdata)
 dblabel = nus_dataset.dblabel
 
+
+sem = td.Semaphore(2)
+svms = []
+
 def runner(i):
+	sem.acquire()
 	print("learn begin %s" % i)
-	clf = svm.SVC()
+	clf = svm.LinearSVC()
 	clf = clf.fit(traindata, trainlabel[i])
+	svms.append((i, clf))
 	result = clf.predict(testdata)
-	print(metrics.classification_report(testlabel[i], result))
+	print("label %s done\n%s"
+	 % (i, metrics.classification_report(testlabel[i], result)))
+	print metrics.confusion_matrix(testlabel[i], result)
+	sem.release()
 
 
 ts = []
