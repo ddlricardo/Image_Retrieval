@@ -114,13 +114,13 @@ for order in range(10):
 	raw_data = fin.readlines()
 	for i in range(len(trainid)):
 		idx = iddic[trainid[i]]
-		trainlabel[order].append(raw_data[idx].strip())
+		trainlabel[order].append(int(raw_data[idx].strip()))
 	for i in range(len(testid)):
 		idx = iddic[testid[i]]
-		testlabel[order].append(raw_data[idx].strip())
+		testlabel[order].append(int(raw_data[idx].strip()))
 	for i in range(len(dbid)):
 		idx = iddic[dbid[i]]
-		dblabel[order].append(raw_data[idx].strip())
+		dblabel[order].append(int(raw_data[idx].strip()))
 	fin.close()
 
 traindata = np.array(traindata)
