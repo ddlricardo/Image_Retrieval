@@ -67,7 +67,7 @@ for j in range(2000):
 	for k in range(100000):
 		mutiply = 1.0
 		for i in range(10):
-			mutiply = mutiply * (1 - float(result[i][j][1] * dbresult[i][k][1])) 
+			mutiply = mutiply * (1 - float(result[i][j][1] * dbresult[i][k][1]))
 		prediction[j][k] = 1 - mutiply
 				#if result[i][j] == 1:
 				#	prediction[j][k] += prate1[i]
