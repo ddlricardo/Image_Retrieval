@@ -26,8 +26,10 @@ sem = td.Semaphore(config.num_thread)
 svms = []
 
 result = []
+dbresult = []
 for i in range(10):
 	result.append([])
+	dbresult.append([])
 prediction = []
 temp = [0] * 100000
 for i in range(2000):
@@ -40,6 +42,7 @@ def runner(i):
 	clf = clf.fit(traindata, trainlabel[i])
 	svms.append((i, clf))
 	result[i] = clf.predict_proba(testdata)
+	dbresult[i] = clf.predict_proba(dbdata)
 	#print("label %s done\n%s"
 	# % (i, metrics.classification_report(testlabel[i], result[i])))
 	#print metrics.confusion_matrix(testlabel[i], result)
@@ -60,11 +63,12 @@ s = pickle.dumps(svms)
 
 open("ls_bs_dump.bin", 'w').write(s)
 
-for i in range(10):
-	for j in range(2000):
-		for k in range(100000):
-			if dblabel[i][k] == 1:
-				prediction[j][k] += float(result[i][j][1])
+for j in range(2000):
+	for k in range(100000):
+		mutiply = 1.0
+		for i in range(10):
+			mutiply = mutiply * (1 - float(result[i][j][1] * dbresult[i][k][1])) 
+		prediction[j][k] = 1 - mutiply
 
 ap = []
 for i in range(2000):

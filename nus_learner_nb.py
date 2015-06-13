@@ -26,8 +26,10 @@ sem = td.Semaphore(config.num_thread)
 svms = []
 
 result = []
+dbresult = []
 for i in range(10):
 	result.append([])
+	dbresult.append([])
 prediction = []
 temp = [0] * 100000
 for i in range(2000):
@@ -40,6 +42,7 @@ def runner(i):
 	clf = clf.fit(traindata, trainlabel[i])
 	svms.append((i, clf))
 	result[i] = clf.predict(testdata)
+	dbresult[i] = clf.predict(dbdata)
 	print("label %s done\n%s"
 	 % (i, metrics.classification_report(testlabel[i], result[i])))
 	#print metrics.confusion_matrix(testlabel[i], result)
@@ -63,9 +66,11 @@ open("nb_dump.bin", 'w').write(s)
 for i in range(10):
 	for j in range(2000):
 		for k in range(100000):
-			if dblabel[i][k] == 1:
+			if dbresult[i][k] == 1:
 				if result[i][j] == 1:
-					prediction[j][k] += 1
+					prediction[j][k] += prate1[i]
+				else:
+					prediction[j][k] += 1 - prate0[i]
 
 ap = []
 for i in range(2000):

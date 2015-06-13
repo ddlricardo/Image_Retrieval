@@ -1,6 +1,5 @@
 import numpy as np
 from sklearn import svm
-from sklearn import neighbors
 from sklearn import linear_model
 from sklearn import metrics
 from sklearn import preprocessing
@@ -39,13 +38,13 @@ for i in range(2000):
 def runner(i):
 	sem.acquire()
 	print("learn begin %s" % i)
-	clf = ensemble.BaggingClassifier(neighbors.KNeighborsClassifier())
+	clf = ensemble.RandomForestClassifier(n_estimators=100)
 	clf = clf.fit(traindata, trainlabel[i])
 	svms.append((i, clf))
 	result[i] = clf.predict_proba(testdata)
 	dbresult[i] = clf.predict_proba(dbdata)
-	print("label %s done\n%s"
-	 % (i, metrics.classification_report(testlabel[i], result[i])))
+	#print("label %s done\n%s"
+	# % (i, metrics.classification_report(testlabel[i], result[i])))
 	#print metrics.confusion_matrix(testlabel[i], result)
 	sem.release()
 
@@ -62,7 +61,7 @@ for i in range(10):
 for t in ts: t.join()
 s = pickle.dumps(svms)
 
-open("knn_bs_dump.bin", 'w').write(s)
+open("rf_dump.bin", 'w').write(s)
 
 for j in range(2000):
 	for k in range(100000):

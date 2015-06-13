@@ -1,10 +1,8 @@
 import numpy as np
 from sklearn import svm
-from sklearn import neighbors
 from sklearn import linear_model
 from sklearn import metrics
 from sklearn import preprocessing
-from sklearn import ensemble
 import threading as td
 import pickle
 import copy
@@ -39,13 +37,14 @@ for i in range(2000):
 def runner(i):
 	sem.acquire()
 	print("learn begin %s" % i)
-	clf = ensemble.BaggingClassifier(neighbors.KNeighborsClassifier())
+	#clf = svm.LinearSVC()
+	clf = linear_model.LogisticRegression()
 	clf = clf.fit(traindata, trainlabel[i])
 	svms.append((i, clf))
 	result[i] = clf.predict_proba(testdata)
 	dbresult[i] = clf.predict_proba(dbdata)
-	print("label %s done\n%s"
-	 % (i, metrics.classification_report(testlabel[i], result[i])))
+	#print("label %s done\n%s"
+	# % (i, metrics.classification_report(testlabel[i], result[i])))
 	#print metrics.confusion_matrix(testlabel[i], result)
 	sem.release()
 
@@ -62,7 +61,7 @@ for i in range(10):
 for t in ts: t.join()
 s = pickle.dumps(svms)
 
-open("knn_bs_dump.bin", 'w').write(s)
+open("lr_dump.bin", 'w').write(s)
 
 for j in range(2000):
 	for k in range(100000):
@@ -70,6 +69,10 @@ for j in range(2000):
 		for i in range(10):
 			mutiply = mutiply * (1 - float(result[i][j][1] * dbresult[i][k][1])) 
 		prediction[j][k] = 1 - mutiply
+				#if result[i][j] == 1:
+				#	prediction[j][k] += prate1[i]
+				#else:
+				#	prediction[j][k] += 1 - prate0[i]
 
 ap = []
 for i in range(2000):
