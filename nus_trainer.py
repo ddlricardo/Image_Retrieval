@@ -4,7 +4,7 @@ from sklearn import linear_model
 from sklearn import metrics
 from sklearn import preprocessing
 import threading as td
-import pickle
+import cPickle as pickle
 import copy
 import os
 
@@ -12,6 +12,7 @@ import nus_dataset
 import config
 
 ap = []
+prediction = []
 
 def myrunner(func):
     sem = td.Semaphore(config.num_thread)
@@ -58,10 +59,6 @@ def run(trainer, predictor, relat_calc, dump_name):
     for i in range(10):
         result.append([])
         dbresult.append([])
-    prediction = []
-    temp = [0] * 100000
-    for i in range(2000):
-        prediction.append(copy.copy(temp))
 
     def runner(i):
         print("learn begin %s" % i)
@@ -92,6 +89,7 @@ def run(trainer, predictor, relat_calc, dump_name):
     dbresult.shape = (1,) + (dbresult.shape[0],) + (dbresult.shape[1:])
 
     print "calc relation %s %s" % (str(result.shape), str(dbresult.shape))
+    global prediction
     prediction = relat_calc(result, dbresult)
 
 
