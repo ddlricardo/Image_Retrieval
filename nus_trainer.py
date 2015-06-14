@@ -70,8 +70,8 @@ def run(trainer, predictor, relat_calc, dump_name):
             clf = trainer(traindata, trainlabel[i])
     	    svms.append((i, clf))
 
-        result[i] = predictor(clf, testdata, testlabel)
-        dbresult[i] = predictor(clf, dbdata, dblabel)
+        result[i] = predictor(clf, testdata, testlabel[i])
+        dbresult[i] = predictor(clf, dbdata, dblabel[i])
 
     print "training"
     myrunner(runner)
