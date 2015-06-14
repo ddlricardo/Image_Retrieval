@@ -8,7 +8,7 @@ import cPickle as pickle
 import copy
 import os
 
-import nus_dataset
+import wiki_dataset
 import config
 
 ap = []
@@ -35,17 +35,15 @@ def myrunner(func):
     for t in ts: t.join()
 
 def run(trainer, predictor, relat_calc, dump_name):
-    config.goto_nus_dataset()
-    traindata = nus_dataset.traindata
-    #traindata = preprocessing.scale(traindata)
-    trainlabel = nus_dataset.trainlabel
-    testdata = nus_dataset.testdata
-    #testdata = preprocessing.scale(testdata)
-    testlabel = nus_dataset.testlabel
-    dbdata = nus_dataset.dbdata
-    #dbdata = preprocessing.scale(dbdata)
-    dblabel = nus_dataset.dblabel
-    groundtruth = nus_dataset.groundtruth
+    config.goto_wiki_dataset()
+
+    traindata = wiki_dataset.traindata
+    trainlabel = wiki_dataset.trainlabel
+
+    testdata = wiki_dataset.testdata
+    testlabel = wiki_dataset.testlabel
+
+    groundtruth = wiki_dataset.groundtruth
 
     svms = []
     ok = 0
@@ -54,6 +52,7 @@ def run(trainer, predictor, relat_calc, dump_name):
         ok = 1
         svms = pickle.load(open(dump_name))
 
+    global result, dbresult
     result = []
     dbresult = []
     for i in range(10):
@@ -66,11 +65,12 @@ def run(trainer, predictor, relat_calc, dump_name):
         if ok:
             clf = svms[i][1]
         else:
-            clf = trainer(traindata, trainlabel[i])
+            clf = trainer(traindata, trainlabel == (i+1))
             svms.append((i, clf))
 
-        result[i] = predictor(clf, testdata, testlabel[i])
-        dbresult[i] = predictor(clf, dbdata, dblabel[i])
+        result[i] = predictor(clf, testdata, testlabel == (i+1))
+        #dbresult[i] = predictor(clf, traindata, trainlabel == (i+1))
+        dbresult[i] = (trainlabel == (i+1))
 
         print("learn done %s" % i)
 
@@ -107,11 +107,11 @@ def run(trainer, predictor, relat_calc, dump_name):
         global ap
 
         for i in range(l,r):
-            print i
+            #print i
             answer = sorted(enumerate(prediction[i]), key=lambda d:d[1], reverse=True)
             apsum = float(0)
             rightsum = 0
-            for j in range(100000):
+            for j in range(prediction.shape[1]):
                 if groundtruth[i][answer[j][0]] == 1:
                     rightsum += 1
                     apsum += rightsum * 1.0 / (j + 1)

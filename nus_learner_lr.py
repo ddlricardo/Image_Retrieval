@@ -11,12 +11,16 @@ import nus_trainer
 
 def trainer(traindata, trainlabel):
 	clf = linear_model.LogisticRegression()
+	clf.verbose = 2
 	clf = clf.fit(traindata, trainlabel)
 	return clf
 
 def predictor(clf, testdata, label):
 	result = clf.predict_proba(testdata)
 	return result
+
+def groundtruth_predictor(clf, testdata, label):
+	return label
 
 def relat_calc(la, lb):
 	if la.ndim == 4:
@@ -41,4 +45,5 @@ def relat_calc2(la, lb):
 		res[i] = 1 - np.prod(1 - la[i] * lb, axis=2)
 	return res
 
-nus_trainer.run(trainer, predictor, relat_calc, "lr.bin")
+#nus_trainer.run(trainer, predictor, relat_calc, "lr2.bin")
+nus_trainer.run(trainer, groundtruth_predictor, relat_calc, "lr5.bin")
