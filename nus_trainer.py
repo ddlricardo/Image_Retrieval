@@ -11,6 +11,8 @@ import os
 import nus_dataset
 import config
 
+ap = []
+
 def myrunner(func):
     sem = td.Semaphore(config.num_thread)
 
@@ -25,9 +27,9 @@ def myrunner(func):
 
     ts = []
     for i in range(10):
-    	t = td.Thread(target=wrapper, args=(i,))
-    	t.start()
-    	ts.append(t)
+        t = td.Thread(target=wrapper, args=(i,))
+        t.start()
+        ts.append(t)
 
     for t in ts: t.join()
 
@@ -54,21 +56,21 @@ def run(trainer, predictor, relat_calc, dump_name):
     result = []
     dbresult = []
     for i in range(10):
-    	result.append([])
-    	dbresult.append([])
+        result.append([])
+        dbresult.append([])
     prediction = []
     temp = [0] * 100000
     for i in range(2000):
-    	prediction.append(copy.copy(temp))
+        prediction.append(copy.copy(temp))
 
     def runner(i):
-    	print("learn begin %s" % i)
+        print("learn begin %s" % i)
 
         if ok:
             clf = svms[i][1]
         else:
             clf = trainer(traindata, trainlabel[i])
-    	    svms.append((i, clf))
+            svms.append((i, clf))
 
         result[i] = predictor(clf, testdata, testlabel[i])
         dbresult[i] = predictor(clf, dbdata, dblabel[i])
@@ -94,6 +96,7 @@ def run(trainer, predictor, relat_calc, dump_name):
 
 
     print "calc mAP"
+    global ap
     ap = []
 
     def runner2(i):
@@ -101,21 +104,23 @@ def run(trainer, predictor, relat_calc, dump_name):
         m = n / config.num_thread +1
         l = i*m
         r = min(l+m, n)
+        global ap
 
         for i in range(l,r):
-            if i%10 == 0:
-                print i
-        	answer = sorted(enumerate(prediction[i]), key=lambda d:d[1], reverse=True)
-        	apsum = float(0)
-        	rightsum = 0
-        	for j in range(100000):
-        		if groundtruth[i][answer[j][0]] == 1:
-        			rightsum += 1
-        			apsum += rightsum * 1.0 / (j + 1)
-        	ap.append(apsum / sum(groundtruth[i]))
+            print i
+            answer = sorted(enumerate(prediction[i]), key=lambda d:d[1], reverse=True)
+            apsum = float(0)
+            rightsum = 0
+            for j in range(100000):
+                if groundtruth[i][answer[j][0]] == 1:
+                    rightsum += 1
+                    apsum += rightsum * 1.0 / (j + 1)
+            ap.append(apsum / sum(groundtruth[i]))
+
 
     myrunner(runner2)
     print 'MAP = ' + str(sum(ap) / len(ap))
+    print len(ap)
 
     count = 0
     right = 0
