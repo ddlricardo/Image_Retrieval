@@ -8,7 +8,7 @@ import cPickle as pickle
 import copy
 import os
 
-import nus_dataset
+import wiki_dataset
 import config
 
 ap = []
@@ -34,26 +34,37 @@ def myrunner(func):
 
     for t in ts: t.join()
 
-def run(trainer, predictor, relat_calc, dump_name):
-    config.goto_nus_dataset()
-    traindata = nus_dataset.traindata
-    #traindata = preprocessing.scale(traindata)
-    trainlabel = nus_dataset.trainlabel
-    testdata = nus_dataset.testdata
-    #testdata = preprocessing.scale(testdata)
-    testlabel = nus_dataset.testlabel
-    dbdata = nus_dataset.dbdata
-    #dbdata = preprocessing.scale(dbdata)
-    dblabel = nus_dataset.dblabel
-    groundtruth = nus_dataset.groundtruth
+def run(trainer, predictor, relat_calc, dump_name, opt, ratio = 1.0, need_dump = True):
+    config.goto_wiki_dataset()
+
+    if opt == 'img':
+        traindata = wiki_dataset.traindata
+        testdata = wiki_dataset.testdata
+    elif opt == 'text':
+        traindata = wiki_dataset.traindata2
+        testdata = wiki_dataset.testdata2
+    elif opt == 'both':
+        traindata = np.concatenate(
+            (wiki_dataset.traindata2, wiki_dataset.traindata * ratio),
+            axis = 1)
+        testdata = np.concatenate(
+            (wiki_dataset.testdata2, wiki_dataset.testdata * ratio),
+            axis = 1)
+    else:
+        raise Error("error opt")
+
+    testlabel = wiki_dataset.testlabel
+    trainlabel = wiki_dataset.trainlabel
+    groundtruth = wiki_dataset.groundtruth
 
     svms = []
     ok = 0
-    if os.path.exists(dump_name):
+    if need_dump and os.path.exists(dump_name):
         print "load model from dump file %s" % dump_name
         ok = 1
         svms = pickle.load(open(dump_name))
 
+    global result, dbresult
     result = []
     dbresult = []
     for i in range(10):
@@ -66,11 +77,12 @@ def run(trainer, predictor, relat_calc, dump_name):
         if ok:
             clf = svms[i][1]
         else:
-            clf = trainer(traindata, trainlabel[i])
+            clf = trainer(traindata, trainlabel == (i+1))
             svms.append((i, clf))
 
-        result[i] = predictor(clf, testdata, testlabel[i])
-        dbresult[i] = predictor(clf, dbdata, dblabel[i])
+        result[i] = predictor(clf, testdata, testlabel == (i+1))
+        #dbresult[i] = predictor(clf, traindata, trainlabel == (i+1))
+        dbresult[i] = (trainlabel == (i+1))
 
         print("learn done %s" % i)
 
@@ -78,8 +90,9 @@ def run(trainer, predictor, relat_calc, dump_name):
     myrunner(runner)
 
     svms = sorted(svms, key=lambda x:x[0])
-    s = pickle.dumps(svms)
-    open(dump_name, 'w').write(s)
+    if need_dump:
+        s = pickle.dumps(svms)
+        open(dump_name, 'w').write(s)
 
     result = np.array(result)
     dbresult = np.array(dbresult)
@@ -107,11 +120,11 @@ def run(trainer, predictor, relat_calc, dump_name):
         global ap
 
         for i in range(l,r):
-            print i
+            #print i
             answer = sorted(enumerate(prediction[i]), key=lambda d:d[1], reverse=True)
             apsum = float(0)
             rightsum = 0
-            for j in range(100000):
+            for j in range(prediction.shape[1]):
                 if groundtruth[i][answer[j][0]] == 1:
                     rightsum += 1
                     apsum += rightsum * 1.0 / (j + 1)
@@ -119,7 +132,8 @@ def run(trainer, predictor, relat_calc, dump_name):
 
 
     myrunner(runner2)
-    print 'MAP = ' + str(sum(ap) / len(ap))
+    MeanAP = sum(ap) / len(ap)
+    print 'MAP = ' + str(MeanAP)
     print len(ap)
 
     count = 0
@@ -130,3 +144,4 @@ def run(trainer, predictor, relat_calc, dump_name):
     right = np.sum(groundtruth == prediction)
 
     print float(right * 1.0 / count)
+    return MeanAP
