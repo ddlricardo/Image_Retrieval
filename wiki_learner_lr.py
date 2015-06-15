@@ -26,6 +26,13 @@ def trainer(traindata, trainlabel):
     clf = clf.fit(traindata, trainlabel)
     return clf
 
+def trainer_sgd(traindata, trainlabel):
+    clf = linear_model.SGDClassifier(loss='log', n_iter = 100)
+    clf.verbose = 1
+    #clf.tol = clf.tol / 10
+    clf = clf.fit(traindata, trainlabel)
+    return clf
+
 def predictor(clf, testdata, label):
     result = clf.predict_proba(testdata)
     return result
@@ -65,8 +72,8 @@ def relat_calc2(la, lb):
 maps = {}
 max_map = 0
 max_rt = 0
-#wiki_trainer.run(trainer, predictor, relat_calc, "lr9.bin", 'both', 0.02, False)
-
+wiki_trainer.run(trainer_sgd, predictor, relat_calc, "lr9.bin", 'text', 0.02, False)
+'''
 for i in range(100):
     rt = i*0.01
     mp = wiki_trainer.run(trainer, predictor, relat_calc, "lr9.bin", 'both', rt, False)
@@ -75,3 +82,4 @@ for i in range(100):
         max_rt = rt
     maps[rt] = mp
     print "now ", max_map, max_rt
+'''
