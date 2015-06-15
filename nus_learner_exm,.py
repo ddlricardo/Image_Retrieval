@@ -10,7 +10,7 @@ import copy
 import nus_trainer
 
 def trainer(traindata, trainlabel):
-	clf = AdaBoostClassifier(linear_model.LogisticRegression())
+	clf = linear_model.LogisticRegression()
 	clf = clf.fit(traindata, trainlabel)
 	return clf
 
@@ -41,4 +41,4 @@ def relat_calc2(la, lb):
 		res[i] = 1 - np.prod(1 - la[i] * lb, axis=2)
 	return res
 
-nus_trainer.run(trainer, predictor, relat_calc, "lr_ab.bin")
+nus_trainer.run(trainer, predictor, relat_calc, "exm.bin")

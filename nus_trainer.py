@@ -116,6 +116,7 @@ def run(trainer, predictor, relat_calc, dump_name):
 
     myrunner(runner2)
     print 'MAP = ' + str(sum(ap) / len(ap))
+    print len(ap)
 
     count = 0
     right = 0

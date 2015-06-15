@@ -3,97 +3,51 @@ from sklearn import svm
 from sklearn import linear_model
 from sklearn import metrics
 from sklearn import preprocessing
-from sklearn.ensemble import BaggingClassifier
 import threading as td
 import pickle
 import copy
 
-import nus_dataset
-import config
-
-traindata = nus_dataset.traindata
-#traindata = preprocessing.scale(traindata)
-trainlabel = nus_dataset.trainlabel
-testdata = nus_dataset.testdata
-#testdata = preprocessing.scale(testdata)
-testlabel = nus_dataset.testlabel
-dbdata = nus_dataset.dbdata
-#dbdata = preprocessing.scale(dbdata)
-dblabel = nus_dataset.dblabel
-groundtruth = nus_dataset.groundtruth
+import nus_trainer
 
 sem = td.Semaphore(1)
-svms = []
+def need_lock(func):
+	def wrapper(*args, **kvargs):
+		sem.acquire()
+		func(*args, **kvargs)
+		sem.release()
+	return wrapper
 
-result = []
-dbresult = []
-for i in range(10):
-	result.append([])
-	dbresult.append([])
-prediction = []
-temp = [0] * 100000
-for i in range(2000):
-	prediction.append(copy.copy(temp))
+@need_lock
+def trainer(traindata, trainlabel):
+	clf = BaggingClassifier(linear_model.LogisticRegression())
+	clf = clf.fit(traindata, trainlabel)
+	return clf
 
-def runner(i):
-	sem.acquire()
-	print("learn begin %s" % i)
-	clf = BaggingClassifier(linear_model.LogisticRegression(), 100)
-	clf.fit(traindata, trainlabel[i])
-	svms.append((i, clf))
-	result[i] = clf.predict_proba(testdata)
-	dbresult[i] = clf.predict_proba(dbdata)
-	#print("label %s done\n%s"
-	# % (i, metrics.classification_report(testlabel[i], result[i])))
-	#print metrics.confusion_matrix(testlabel[i], result)
-	sem.release()
+def predictor(clf, testdata, label):
+	result = clf.predict_proba(testdata)
+	return label
 
-prate0 = [0.96, 0.92, 0.8, 0.89, 0.93, 0.93, 0.89, 0.81, 0.94, 0.92]
-prate1 = [0.87, 0.56, 0.77, 0.66, 0.64, 0.79, 0.87, 0.79, 0.68, 0.74]
+def relat_calc(la, lb):
+	if la.ndim == 4:
+		# 由于 LogisticRegression 返回两个数
+		#       n:1:10
+		la = la[:,:,:,1]
+		#       1:m:10
+		lb = lb[:,:,:,1]
 
-ts = []
+	res = np.zeros((la.shape[0], lb.shape[1]))
+	for i in range(la.shape[0]):
+		res[i] = np.sum(la[i] * lb, axis=2)
+	return res
 
-for i in range(10):
-	t = td.Thread(target=runner, args=(i,))
-	t.start()
-	ts.append(t)
+def relat_calc2(la, lb):
+	if la.ndim == 4:
+		la = la[:,:,:,1]
+		lb = lb[:,:,:,1]
 
-for t in ts: t.join()
-s = pickle.dumps(svms)
+	res = np.zeros((la.shape[0], lb.shape[1]))
+	for i in range(la.shape[0]):
+		res[i] = 1 - np.prod(1 - la[i] * lb, axis=2)
+	return res
 
-open("lr_bs_dump.bin", 'w').write(s)
-
-for j in range(2000):
-	for k in range(100000):
-		mutiply = 1.0
-		for i in range(10):
-			mutiply = mutiply * (1 - float(result[i][j][1] * dbresult[i][k][1]))
-		prediction[j][k] = 1 - mutiply
-				#if result[i][j] == 1:
-				#	prediction[j][k] += prate1[i]
-				#else:
-				#	prediction[j][k] += 1 - prate0[i]
-
-ap = []
-for i in range(2000):
-	orderdic = {}
-	for j in range(100000):
-		orderdic[j] = prediction[i][j]
-	answer = sorted(orderdic.iteritems(), key=lambda d:d[1], reverse=True)
-	apsum = float(0)
-	rightsum = 0
-	for j in range(100000):
-		if groundtruth[i][answer[j][0]] == 1:
-			rightsum += 1
-			apsum += rightsum * 1.0 / (j + 1)
-	ap.append(apsum / sum(groundtruth[i]))
-print 'MAP = ' + str(sum(ap) / len(ap))
-
-count = 0
-right = 0
-for i in range(2000):
-	for j in range(100000):
-		count += 1
-		if prediction[i][j] == groundtruth[i][j]:
-			right += 1
-print float(right * 1.0 / count)
+nus_trainer.run(trainer, predictor, relat_calc, "lr_bs.bin")
