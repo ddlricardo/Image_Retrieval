@@ -34,20 +34,32 @@ def myrunner(func):
 
     for t in ts: t.join()
 
-def run(trainer, predictor, relat_calc, dump_name):
+def run(trainer, predictor, relat_calc, dump_name, opt, ratio = 1.0, need_dump = True):
     config.goto_wiki_dataset()
 
-    traindata = wiki_dataset.traindata
-    trainlabel = wiki_dataset.trainlabel
+    if opt == 'img':
+        traindata = wiki_dataset.traindata
+        testdata = wiki_dataset.testdata
+    elif opt == 'text':
+        traindata = wiki_dataset.traindata2
+        testdata = wiki_dataset.testdata2
+    elif opt == 'both':
+        traindata = np.concatenate(
+            (wiki_dataset.traindata2, wiki_dataset.traindata * ratio),
+            axis = 1)
+        testdata = np.concatenate(
+            (wiki_dataset.testdata2, wiki_dataset.testdata * ratio),
+            axis = 1)
+    else:
+        raise Error("error opt")
 
-    testdata = wiki_dataset.testdata
     testlabel = wiki_dataset.testlabel
-
+    trainlabel = wiki_dataset.trainlabel
     groundtruth = wiki_dataset.groundtruth
 
     svms = []
     ok = 0
-    if os.path.exists(dump_name):
+    if need_dump and os.path.exists(dump_name):
         print "load model from dump file %s" % dump_name
         ok = 1
         svms = pickle.load(open(dump_name))
@@ -78,8 +90,9 @@ def run(trainer, predictor, relat_calc, dump_name):
     myrunner(runner)
 
     svms = sorted(svms, key=lambda x:x[0])
-    s = pickle.dumps(svms)
-    open(dump_name, 'w').write(s)
+    if need_dump:
+        s = pickle.dumps(svms)
+        open(dump_name, 'w').write(s)
 
     result = np.array(result)
     dbresult = np.array(dbresult)
@@ -119,7 +132,8 @@ def run(trainer, predictor, relat_calc, dump_name):
 
 
     myrunner(runner2)
-    print 'MAP = ' + str(sum(ap) / len(ap))
+    MeanAP = sum(ap) / len(ap)
+    print 'MAP = ' + str(MeanAP)
     print len(ap)
 
     count = 0
@@ -130,3 +144,4 @@ def run(trainer, predictor, relat_calc, dump_name):
     right = np.sum(groundtruth == prediction)
 
     print float(right * 1.0 / count)
+    return MeanAP
