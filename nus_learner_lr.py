@@ -10,7 +10,7 @@ import copy
 import nus_trainer
 
 def trainer(traindata, trainlabel):
-	clf = linear_model.LogisticRegression()
+	clf = linear_model.LogisticRegression(penalty='l1', max_iter=1000)
 	clf.verbose = 2
 	clf = clf.fit(traindata, trainlabel)
 	return clf
@@ -24,7 +24,6 @@ def groundtruth_predictor(clf, testdata, label):
 
 def relat_calc(la, lb):
 	if la.ndim == 4:
-		# 由于 LogisticRegression 返回两个数
 		#       n:1:10
 		la = la[:,:,:,1]
 		#       1:m:10
